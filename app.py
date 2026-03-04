@@ -1,0 +1,155 @@
+import streamlit as st
+import random
+import pandas as pd
+import plotly.graph_objects as go
+import plotly.express as px
+from datetime import datetime, timedelta
+
+# ---------------------------------------------------
+# PAGE CONFIG
+# ---------------------------------------------------
+st.set_page_config(page_title="IQAsset Optimization Dashboard", layout="wide")
+
+# ---------------------------------------------------
+# CONFIGURATION
+# ---------------------------------------------------
+TOTAL_SERVERS = 50
+AVG_SERVER_COST = 3000  # monthly cloud cost per VM (€ realistic cloud example)
+MONTHS_PER_YEAR = 12
+
+# ---------------------------------------------------
+# AUTO REFRESH
+# ---------------------------------------------------
+
+# ---------------------------------------------------
+# GENERATE SERVER DATA
+# ---------------------------------------------------
+servers = []
+
+for i in range(1, TOTAL_SERVERS + 1):
+    allocated_cpu = random.choice([2, 4, 8])
+    allocated_ram = random.choice([8, 16, 32])
+
+    avg_cpu_usage = random.randint(5, 70)
+    avg_ram_usage = random.randint(10, 80)
+
+    overprovisioned = avg_cpu_usage < 25 and avg_ram_usage < 40
+
+    recommended_cpu = allocated_cpu // 2 if overprovisioned else allocated_cpu
+    recommended_ram = allocated_ram // 2 if overprovisioned else allocated_ram
+
+    monthly_cost = AVG_SERVER_COST
+    recommended_cost = monthly_cost * 0.6 if overprovisioned else monthly_cost
+    monthly_savings = monthly_cost - recommended_cost
+
+    servers.append({
+        "Server ID": f"VM-{1000+i}",
+        "Allocated CPU": allocated_cpu,
+        "Avg CPU Usage %": avg_cpu_usage,
+        "Allocated RAM (GB)": allocated_ram,
+        "Avg RAM Usage %": avg_ram_usage,
+        "Overprovisioned": "Yes" if overprovisioned else "No",
+        "Recommended CPU": recommended_cpu,
+        "Recommended RAM (GB)": recommended_ram,
+        "Monthly Cost (€)": monthly_cost,
+        "Potential Monthly Savings (€)": round(monthly_savings, 2)
+    })
+
+df = pd.DataFrame(servers)
+
+# ---------------------------------------------------
+# SAVINGS CALCULATION
+# ---------------------------------------------------
+total_monthly_savings = df["Potential Monthly Savings (€)"].sum()
+projected_annual_savings = total_monthly_savings * MONTHS_PER_YEAR
+
+overprov_count = df[df["Overprovisioned"] == "Yes"].shape[0]
+
+# ---------------------------------------------------
+# HEADER
+# ---------------------------------------------------
+st.title("IQAsset Cloud Optimization Engine")
+st.markdown("Automated Overprovisioning Detection & Rightsizing Recommendations")
+
+# ---------------------------------------------------
+# EXECUTIVE KPIs
+# ---------------------------------------------------
+k1, k2, k3, k4 = st.columns(4)
+
+k1.metric("Total VMs", TOTAL_SERVERS)
+k2.metric("Overprovisioned VMs", overprov_count)
+k3.metric("Projected Monthly Savings", f"€{total_monthly_savings:,.0f}")
+k4.metric("Projected Annual Savings", f"€{projected_annual_savings:,.0f}")
+
+st.divider()
+
+# ---------------------------------------------------
+# PERFORMANCE GAUGES (LIVE FLUCTUATION)
+# ---------------------------------------------------
+st.subheader("Live Cloud Performance Snapshot")
+
+cpu_global = random.randint(40, 85)
+ram_global = random.randint(50, 90)
+
+g1, g2 = st.columns(2)
+
+def gauge(title, value):
+    return go.Figure(go.Indicator(
+        mode="gauge+number",
+        value=value,
+        title={'text': title},
+        gauge={
+            'axis': {'range': [0, 100]},
+            'bar': {'thickness': 0.3},
+            'steps': [
+                {'range': [0, 60], 'color': "#2ecc71"},
+                {'range': [60, 80], 'color': "#f39c12"},
+                {'range': [80, 100], 'color': "#e74c3c"}
+            ]
+        }
+    ))
+
+g1.plotly_chart(gauge("Average CPU Utilization (%)", cpu_global), use_container_width=True)
+g2.plotly_chart(gauge("Average RAM Utilization (%)", ram_global), use_container_width=True)
+
+st.divider()
+
+# ---------------------------------------------------
+# SERVER TABLE WITH INTELLIGENCE
+# ---------------------------------------------------
+st.subheader("VM Rightsizing Analysis")
+
+st.dataframe(df, use_container_width=True)
+
+st.divider()
+
+# ---------------------------------------------------
+# SAVINGS TREND CHART
+# ---------------------------------------------------
+st.subheader("Projected Savings Trend (Next 12 Months)")
+
+months = [datetime.now() + timedelta(days=30*x) for x in range(12)]
+savings_projection = [projected_annual_savings / 12] * 12
+
+trend_df = pd.DataFrame({
+    "Month": months,
+    "Projected Savings (€)": savings_projection
+})
+
+line_chart = px.line(trend_df, x="Month", y="Projected Savings (€)")
+st.plotly_chart(line_chart, use_container_width=True)
+
+st.divider()
+
+# ---------------------------------------------------
+# AUTOMATION BUTTON
+# ---------------------------------------------------
+if st.button("Execute Automated Rightsizing Plan"):
+    st.success("Optimization Plan Generated. Estimated Annual Savings Locked.")
+
+st.caption("Live simulation refreshes automatically.")
+
+import time
+
+time.sleep(3)
+st.rerun()

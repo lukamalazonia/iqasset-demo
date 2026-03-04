@@ -1,0 +1,60 @@
+st.subheader("Live Infrastructure Metrics")
+
+metrics_placeholder = st.empty()
+
+while True:
+
+    # Simulated live metrics
+    cpu_usage = random.randint(40, 85)
+    ram_usage = random.randint(45, 90)
+    disk_usage = random.randint(50, 95)
+    network_load = random.randint(20, 75)
+
+    idle_servers = random.randint(5, 15)
+    idle_capital = idle_servers * AVG_SERVER_COST
+
+    with metrics_placeholder.container():
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            cpu_fig = go.Figure(go.Indicator(
+                mode="gauge+number",
+                value=cpu_usage,
+                title={'text': "CPU Usage (%)"},
+                gauge={'axis': {'range': [0, 100]}}
+            ))
+            st.plotly_chart(cpu_fig, use_container_width=True)
+
+            disk_fig = go.Figure(go.Indicator(
+                mode="gauge+number",
+                value=disk_usage,
+                title={'text': "Disk Usage (%)"},
+                gauge={'axis': {'range': [0, 100]}}
+            ))
+            st.plotly_chart(disk_fig, use_container_width=True)
+
+        with col2:
+            ram_fig = go.Figure(go.Indicator(
+                mode="gauge+number",
+                value=ram_usage,
+                title={'text': "RAM Usage (%)"},
+                gauge={'axis': {'range': [0, 100]}}
+            ))
+            st.plotly_chart(ram_fig, use_container_width=True)
+
+            net_fig = go.Figure(go.Indicator(
+                mode="gauge+number",
+                value=network_load,
+                title={'text': "Network Load (%)"},
+                gauge={'axis': {'range': [0, 100]}}
+            ))
+            st.plotly_chart(net_fig, use_container_width=True)
+
+        st.markdown("### Financial Exposure")
+
+        st.metric("Total Infrastructure Value", f"€{TOTAL_INFRA_VALUE:,.0f}")
+        st.metric("Idle Servers", idle_servers)
+        st.metric("Capital Locked in Idle Servers", f"€{idle_capital:,.0f}")
+
+    time.sleep(1)
